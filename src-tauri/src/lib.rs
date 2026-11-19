@@ -80,6 +80,10 @@ fn build_overlay(app: &tauri::App) -> tauri::Result<WebviewWindow> {
     .visible(true)
     .build()?;
     position_overlay(&overlay);
+    // Windows: the pill's Stop/✕ buttons are inert there (win.rs), so let every
+    // click fall through to the app underneath instead of blocking it.
+    #[cfg(target_os = "windows")]
+    let _ = overlay.set_ignore_cursor_events(true);
     let _ = overlay.show();
     Ok(overlay)
 }
@@ -297,6 +301,9 @@ fn apply_hands_free_shortcut(app: &tauri::AppHandle) {
 
 pub fn run() {
     tauri::Builder::default()
+        // Must be the first plugin: a second launch exits right away, so two copies
+        // never fight over the Right Ctrl hook or paste twice.
+        .plugin(tauri_plugin_single_instance::init(|_app, _argv, _cwd| {}))
         .plugin(
             // The customizable hands-free hotkey lives here — the OS registers the
             // chord, so pressing it fires our handler AND is suppressed from the
