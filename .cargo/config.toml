@@ -1,0 +1,10 @@
+[env]
+# whisper-rs-sys builds whisper.cpp through the `cmake` crate, which on MSVC
+# writes CMAKE_<LANG>_FLAGS_RELEASE without any /O flag, so the Visual Studio
+# project compiles it with Optimization=Disabled (~6x slower ASR: 10.5 s -> 1.75 s
+# per utterance on an i3-12100F). whisper-rs-sys forwards CMAKE_* env vars as
+# -D defines, and the cmake crate then keeps them instead of its own.
+# -O2 is accepted by both MSVC and clang. After changing these, run
+# `cargo clean -p whisper-rs-sys` — the build script does not rerun on its own.
+CMAKE_C_FLAGS_RELEASE = "-O2 -DNDEBUG"
+CMAKE_CXX_FLAGS_RELEASE = "-O2 -DNDEBUG"
